@@ -9,35 +9,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Sparkles } from "lucide-react";
-
-const sports = [
-  { value: "futebol", label: "Futebol" },
-  { value: "basquete", label: "Basquete" },
-  { value: "volei", label: "Vôlei" },
-  { value: "natacao", label: "Natação" },
-  { value: "atletismo", label: "Atletismo" },
-  { value: "tenis", label: "Tênis" },
-  { value: "mma-luta", label: "MMA / Lutas" },
-  { value: "jiu-jitsu", label: "Jiu-Jitsu" },
-  { value: "crossfit", label: "CrossFit" },
-  { value: "musculacao", label: "Musculação / Bodybuilding" },
-  { value: "ciclismo", label: "Ciclismo" },
-  { value: "corrida", label: "Corrida" },
-  { value: "surfe", label: "Surfe" },
-  { value: "skate", label: "Skate" },
-  { value: "ginastica", label: "Ginástica" },
-  { value: "handebol", label: "Handebol" },
-  { value: "futsal", label: "Futsal" },
-  { value: "boxe", label: "Boxe" },
-  { value: "esgrima", label: "Esgrima" },
-  { value: "esports", label: "eSports" },
-  { value: "triathlon", label: "Triathlon" },
-  { value: "polo-aquatico", label: "Polo Aquático" },
-  { value: "rugby", label: "Rugby" },
-  { value: "golf", label: "Golf" },
-  { value: "outro", label: "Outro" },
-];
+import { Sparkles, Loader2 } from "lucide-react";
+import { sports } from "@/constants/sports";
 
 const tones = [
   { id: "informativo", label: "Informativo" },
@@ -163,20 +136,24 @@ export function ScriptForm({ onSubmit, isLoading, defaultSport }: ScriptFormProp
       <div className="space-y-3">
         <Label className="text-foreground font-medium">Tom de comunicação</Label>
         <div className="flex flex-wrap gap-2">
-          {tones.map((tone) => (
-            <button
-              key={tone.id}
-              type="button"
-              onClick={() => handleToneToggle(tone.id)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 ${
-                formData.tones.includes(tone.id)
-                  ? "bg-primary text-primary-foreground shadow-soft"
-                  : "bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-              }`}
-            >
-              {tone.label}
-            </button>
-          ))}
+          {tones.map((tone) => {
+            const selected = formData.tones.includes(tone.id);
+            return (
+              <button
+                key={tone.id}
+                type="button"
+                aria-pressed={selected}
+                onClick={() => handleToneToggle(tone.id)}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
+                  selected
+                    ? "bg-primary text-primary-foreground shadow-soft"
+                    : "bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+                }`}
+              >
+                {tone.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -190,7 +167,7 @@ export function ScriptForm({ onSubmit, isLoading, defaultSport }: ScriptFormProp
         >
           {isLoading ? (
             <span className="flex items-center gap-2">
-              <span className="animate-spin">⟳</span>
+              <Loader2 className="w-5 h-5 animate-spin" />
               Gerando...
             </span>
           ) : (

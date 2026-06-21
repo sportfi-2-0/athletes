@@ -13,33 +13,7 @@ import {
 import { Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-
-const sports = [
-  { value: "futebol", label: "Futebol" },
-  { value: "basquete", label: "Basquete" },
-  { value: "volei", label: "Vôlei" },
-  { value: "natacao", label: "Natação" },
-  { value: "atletismo", label: "Atletismo" },
-  { value: "tenis", label: "Tênis" },
-  { value: "mma-luta", label: "MMA / Lutas" },
-  { value: "jiu-jitsu", label: "Jiu-Jitsu" },
-  { value: "crossfit", label: "CrossFit" },
-  { value: "musculacao", label: "Musculação / Bodybuilding" },
-  { value: "ciclismo", label: "Ciclismo" },
-  { value: "corrida", label: "Corrida" },
-  { value: "surfe", label: "Surfe" },
-  { value: "skate", label: "Skate" },
-  { value: "ginastica", label: "Ginástica" },
-  { value: "handebol", label: "Handebol" },
-  { value: "futsal", label: "Futsal" },
-  { value: "boxe", label: "Boxe" },
-  { value: "esports", label: "eSports" },
-  { value: "triathlon", label: "Triathlon" },
-  { value: "polo-aquatico", label: "Polo Aquático" },
-  { value: "rugby", label: "Rugby" },
-  { value: "golf", label: "Golf" },
-  { value: "outro", label: "Outro" },
-];
+import { sports } from "@/constants/sports";
 
 const countries = [
   { value: "BR", label: "Brasil" },
