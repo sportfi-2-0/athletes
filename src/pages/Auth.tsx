@@ -13,11 +13,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Sparkles } from "lucide-react";
+import { Sparkles, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { sports } from "@/constants/sports";
 import { countries } from "@/constants/countries";
+import { Logo } from "@/components/Logo";
 
 const authSchema = z
   .object({
@@ -55,6 +56,7 @@ const defaultValues: AuthForm = {
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const {
@@ -92,6 +94,16 @@ const Auth = () => {
       });
       if (signUpError) throw signUpError;
 
+      // If email confirmation is enabled there is no session yet, so we can't
+      // write the profile (RLS blocks it). Ask the user to confirm instead of
+      // bouncing into a protected route with no session.
+      if (!signUpData.session) {
+        toast.success("Conta criada! Verifique seu e-mail para confirmar o acesso.");
+        setIsLogin(true);
+        reset({ ...defaultValues, mode: "login" });
+        return;
+      }
+
       const newUser = signUpData.user;
       if (!newUser) {
         throw new Error("Conta criada, mas não foi possível obter os dados do usuário.");
@@ -126,6 +138,7 @@ const Auth = () => {
     <div className="min-h-screen flex items-center justify-center px-4 py-8">
       <div className="w-full max-w-md">
         <div className="text-center mb-8 animate-fade-in">
+          <Logo size={72} className="justify-center mb-4" />
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-accent mb-6">
             <Sparkles className="w-4 h-4 text-primary" />
             <span className="text-sm font-medium text-foreground">
@@ -249,16 +262,37 @@ const Auth = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-foreground font-medium">
-                Senha
-              </Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                className="h-12 bg-card border-border/50 focus:border-primary"
-                {...register("password")}
-              />
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password" className="text-foreground font-medium">
+                  Senha
+                </Label>
+                {isLogin && (
+                  <button
+                    type="button"
+                    onClick={() => navigate("/esqueci-senha")}
+                    className="text-xs text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    Esqueci minha senha
+                  </button>
+                )}
+              </div>
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="••••••••"
+                  className="h-12 bg-card border-border/50 focus:border-primary pr-11"
+                  {...register("password")}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
               {errors.password && (
                 <p className="text-sm text-destructive">{errors.password.message}</p>
               )}

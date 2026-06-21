@@ -69,7 +69,7 @@ export function ScriptCard({
               variant="ghost"
               size="sm"
               onClick={onSchedule}
-              className="text-muted-foreground hover:text-primary"
+              className="text-muted-foreground hover:text-secondary"
             >
               <CalendarPlus className="w-4 h-4" />
               Agendar

@@ -1,4 +1,5 @@
-import { Sparkles, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { Logo } from "@/components/Logo";
 
 /**
  * Branded full-screen loading state. Used while auth state resolves so the
@@ -8,7 +9,7 @@ export function LoadingScreen() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-6">
       <div className="flex items-center gap-2 animate-fade-in">
-        <Sparkles className="w-6 h-6 text-primary" />
+        <Logo size={36} />
         <span className="font-display font-extrabold text-2xl">
           <span className="gradient-text">IRIS.ai</span>
         </span>

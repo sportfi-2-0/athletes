@@ -2,6 +2,7 @@ import { ReactNode } from "react";
 import { NavLink } from "@/components/NavLink";
 import { Sparkles, CalendarDays, Bookmark } from "lucide-react";
 import { UserMenu } from "@/components/UserMenu";
+import { Logo } from "@/components/Logo";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -18,12 +19,7 @@ export function AppLayout({ children }: AppLayoutProps) {
       <nav className="border-b border-border/50 bg-card/60 backdrop-blur-md sticky top-0 z-40">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between h-14">
           <div className="flex items-center gap-3 sm:gap-6">
-            <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-primary" />
-              <span className="font-display font-bold text-sm text-foreground">
-                IRIS.ai
-              </span>
-            </div>
+            <Logo size={26} withWordmark />
 
             <div className="flex items-center gap-1">
               <NavLink to="/" end className={navItemClass} activeClassName={navItemActiveClass}>
