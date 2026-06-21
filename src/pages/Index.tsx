@@ -1,16 +1,22 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { ScriptForm, FormData } from "@/components/ScriptForm";
 import { ScriptResults } from "@/components/ScriptResults";
 import { Script } from "@/components/ScriptCard";
 import { supabase } from "@/integrations/supabase/client";
+import { saveScript } from "@/lib/scripts";
 import { toast } from "sonner";
 import { AppLayout } from "@/components/AppLayout";
 
 const Index = () => {
+  const navigate = useNavigate();
   const [scripts, setScripts] = useState<Script[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [formData, setFormData] = useState<FormData | null>(null);
   const [defaultSport, setDefaultSport] = useState<string | undefined>(undefined);
+  const [savedIds, setSavedIds] = useState<string[]>([]);
+  const [savingId, setSavingId] = useState<string | null>(null);
 
   // Fetch the current user's sport from their profile on mount.
   useEffect(() => {
@@ -38,7 +44,10 @@ const Index = () => {
 
   const handleGenerate = async (data: FormData) => {
     setIsLoading(true);
+    setError(null);
     setFormData(data);
+    setScripts([]);
+    setSavedIds([]);
 
     try {
       const { data: result, error } = await supabase.functions.invoke("generate-scripts", {
@@ -47,11 +56,13 @@ const Index = () => {
 
       if (error) {
         console.error("Error generating scripts:", error);
+        setError("Erro ao gerar roteiros. Tente novamente.");
         toast.error("Erro ao gerar roteiros. Tente novamente.");
         return;
       }
 
       if (result?.error) {
+        setError(result.error);
         toast.error(result.error);
         return;
       }
@@ -59,6 +70,7 @@ const Index = () => {
       setScripts(result.scripts);
     } catch (error) {
       console.error("Error:", error);
+      setError("Erro ao gerar roteiros. Tente novamente.");
       toast.error("Erro ao gerar roteiros. Tente novamente.");
     } finally {
       setIsLoading(false);
@@ -69,6 +81,25 @@ const Index = () => {
     if (formData) {
       await handleGenerate(formData);
     }
+  };
+
+  const handleSave = async (script: Script) => {
+    if (!formData) return;
+    setSavingId(script.id);
+    try {
+      await saveScript(script, formData);
+      setSavedIds((prev) => [...prev, script.id]);
+      toast.success("Roteiro salvo em Meus Roteiros!");
+    } catch (err) {
+      console.error("Failed to save script:", err);
+      toast.error("Não foi possível salvar o roteiro. Tente novamente.");
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  const handleSchedule = (script: Script) => {
+    navigate("/calendario", { state: { script } });
   };
 
   return (
@@ -100,11 +131,16 @@ const Index = () => {
           </div>
 
           {/* Results */}
-          {scripts.length > 0 && (
+          {(isLoading || scripts.length > 0 || error) && (
             <ScriptResults
               scripts={scripts}
               onRegenerate={handleRegenerate}
               isLoading={isLoading}
+              error={error}
+              onSave={handleSave}
+              savedIds={savedIds}
+              savingId={savingId}
+              onSchedule={handleSchedule}
             />
           )}
         </main>

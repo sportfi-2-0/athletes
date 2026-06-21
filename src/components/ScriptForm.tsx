@@ -64,11 +64,14 @@ export function ScriptForm({ onSubmit, isLoading, defaultSport }: ScriptFormProp
     onSubmit(formData);
   };
 
-  const isValid =
-    formData.sport &&
-    formData.format &&
-    formData.description &&
-    formData.tones.length > 0;
+  const missing = [
+    !formData.sport && "esporte",
+    !formData.format && "formato",
+    !formData.description.trim() && "descrição",
+    formData.tones.length === 0 && "tom de comunicação",
+  ].filter(Boolean) as string[];
+
+  const isValid = missing.length === 0;
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -177,9 +180,15 @@ export function ScriptForm({ onSubmit, isLoading, defaultSport }: ScriptFormProp
             </>
           )}
         </Button>
-        <p className="text-center text-sm text-muted-foreground mt-3">
-          As sugestões servem como base para criação e personalização do seu conteúdo.
-        </p>
+        {!isValid && !isLoading ? (
+          <p className="text-center text-sm text-muted-foreground mt-3">
+            Para gerar, preencha: {missing.join(", ")}.
+          </p>
+        ) : (
+          <p className="text-center text-sm text-muted-foreground mt-3">
+            As sugestões servem como base para criação e personalização do seu conteúdo.
+          </p>
+        )}
       </div>
     </form>
   );

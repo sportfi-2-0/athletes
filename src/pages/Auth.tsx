@@ -1,4 +1,7 @@
 import { useState } from "react";
+import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,93 +17,108 @@ import { Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { sports } from "@/constants/sports";
+import { countries } from "@/constants/countries";
 
-const countries = [
-  { value: "BR", label: "Brasil" },
-  { value: "PT", label: "Portugal" },
-  { value: "US", label: "Estados Unidos" },
-  { value: "AR", label: "Argentina" },
-  { value: "ES", label: "Espanha" },
-  { value: "MX", label: "México" },
-  { value: "CO", label: "Colômbia" },
-  { value: "CL", label: "Chile" },
-  { value: "UY", label: "Uruguai" },
-  { value: "PY", label: "Paraguai" },
-  { value: "outro", label: "Outro" },
-];
+const authSchema = z
+  .object({
+    mode: z.enum(["login", "signup"]),
+    email: z.string().email("Informe um e-mail válido."),
+    password: z.string().min(6, "A senha deve ter ao menos 6 caracteres."),
+    name: z.string().optional(),
+    sport: z.string().optional(),
+    birthDate: z.string().optional(),
+    country: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.mode !== "signup") return;
+    if (!data.name || data.name.trim().length < 2)
+      ctx.addIssue({ path: ["name"], code: "custom", message: "Informe seu nome." });
+    if (!data.sport)
+      ctx.addIssue({ path: ["sport"], code: "custom", message: "Selecione um esporte." });
+    if (!data.birthDate)
+      ctx.addIssue({ path: ["birthDate"], code: "custom", message: "Informe sua data de nascimento." });
+    if (!data.country)
+      ctx.addIssue({ path: ["country"], code: "custom", message: "Selecione um país." });
+  });
+
+type AuthForm = z.infer<typeof authSchema>;
+
+const defaultValues: AuthForm = {
+  mode: "login",
+  email: "",
+  password: "",
+  name: "",
+  sport: "",
+  birthDate: "",
+  country: "",
+};
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
-  const [loading, setLoading] = useState(false);
-
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-
-  const [name, setName] = useState("");
-  const [sport, setSport] = useState("");
-  const [birthDate, setBirthDate] = useState("");
-  const [country, setCountry] = useState("");
-
   const navigate = useNavigate();
 
-  const handleLogin = async () => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw error;
-    navigate("/");
+  const {
+    control,
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<AuthForm>({
+    resolver: zodResolver(authSchema),
+    defaultValues,
+  });
+
+  const toggleMode = () => {
+    const next = !isLogin;
+    setIsLogin(next);
+    reset({ ...defaultValues, mode: next ? "login" : "signup" });
   };
 
-  const handleSignup = async () => {
-    if (!name.trim() || !sport || !birthDate || !country) {
-      toast.error("Preencha todos os campos para criar sua conta.");
-      return;
-    }
-
-    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-      email,
-      password,
-    });
-    if (signUpError) throw signUpError;
-
-    const newUser = signUpData.user;
-    if (!newUser) {
-      throw new Error("Conta criada, mas não foi possível obter os dados do usuário.");
-    }
-
-    const { error: profileError } = await supabase.from("profiles").insert({
-      id: newUser.id,
-      name: name.trim(),
-      sport,
-      birth_date: birthDate,
-      country,
-    });
-
-    if (profileError) {
-      console.error("Profile insert failed:", profileError);
-      await supabase.auth.signOut();
-      throw new Error(
-        "Conta criada, mas houve um erro ao salvar seu perfil. Tente novamente."
-      );
-    }
-
-    toast.success("Conta criada com sucesso!");
-    navigate("/");
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
+  const onSubmit = async (values: AuthForm) => {
     try {
       if (isLogin) {
-        await handleLogin();
-      } else {
-        await handleSignup();
+        const { error } = await supabase.auth.signInWithPassword({
+          email: values.email,
+          password: values.password,
+        });
+        if (error) throw error;
+        navigate("/");
+        return;
       }
+
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        email: values.email,
+        password: values.password,
+      });
+      if (signUpError) throw signUpError;
+
+      const newUser = signUpData.user;
+      if (!newUser) {
+        throw new Error("Conta criada, mas não foi possível obter os dados do usuário.");
+      }
+
+      const { error: profileError } = await supabase.from("profiles").insert({
+        id: newUser.id,
+        name: (values.name ?? "").trim(),
+        sport: values.sport!,
+        birth_date: values.birthDate!,
+        country: values.country!,
+      });
+
+      if (profileError) {
+        console.error("Profile insert failed:", profileError);
+        await supabase.auth.signOut();
+        throw new Error(
+          "Conta criada, mas houve um erro ao salvar seu perfil. Tente novamente."
+        );
+      }
+
+      toast.success("Conta criada com sucesso!");
+      navigate("/");
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Erro ao autenticar.";
       toast.error(message);
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -127,7 +145,7 @@ const Auth = () => {
         </div>
 
         <div className="glass-card rounded-3xl p-6 sm:p-8 animate-slide-up">
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5" noValidate>
             {!isLogin && (
               <>
                 <div className="space-y-2">
@@ -138,27 +156,37 @@ const Auth = () => {
                     id="name"
                     type="text"
                     placeholder="Seu nome completo"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
                     className="h-12 bg-card border-border/50 focus:border-primary"
-                    required
+                    {...register("name")}
                   />
+                  {errors.name && (
+                    <p className="text-sm text-destructive">{errors.name.message}</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
                   <Label className="text-foreground font-medium">Esporte</Label>
-                  <Select value={sport} onValueChange={setSport}>
-                    <SelectTrigger className="h-12 bg-card border-border/50 focus:border-primary">
-                      <SelectValue placeholder="Selecione o seu esporte" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {sports.map((s) => (
-                        <SelectItem key={s.value} value={s.value}>
-                          {s.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Controller
+                    control={control}
+                    name="sport"
+                    render={({ field }) => (
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <SelectTrigger className="h-12 bg-card border-border/50 focus:border-primary">
+                          <SelectValue placeholder="Selecione o seu esporte" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {sports.map((s) => (
+                            <SelectItem key={s.value} value={s.value}>
+                              {s.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  {errors.sport && (
+                    <p className="text-sm text-destructive">{errors.sport.message}</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -168,28 +196,38 @@ const Auth = () => {
                   <Input
                     id="birth-date"
                     type="date"
-                    value={birthDate}
-                    onChange={(e) => setBirthDate(e.target.value)}
                     max={new Date().toISOString().split("T")[0]}
                     className="h-12 bg-card border-border/50 focus:border-primary"
-                    required
+                    {...register("birthDate")}
                   />
+                  {errors.birthDate && (
+                    <p className="text-sm text-destructive">{errors.birthDate.message}</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
                   <Label className="text-foreground font-medium">País</Label>
-                  <Select value={country} onValueChange={setCountry}>
-                    <SelectTrigger className="h-12 bg-card border-border/50 focus:border-primary">
-                      <SelectValue placeholder="Selecione o seu país" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {countries.map((c) => (
-                        <SelectItem key={c.value} value={c.value}>
-                          {c.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Controller
+                    control={control}
+                    name="country"
+                    render={({ field }) => (
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <SelectTrigger className="h-12 bg-card border-border/50 focus:border-primary">
+                          <SelectValue placeholder="Selecione o seu país" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {countries.map((c) => (
+                            <SelectItem key={c.value} value={c.value}>
+                              {c.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  {errors.country && (
+                    <p className="text-sm text-destructive">{errors.country.message}</p>
+                  )}
                 </div>
               </>
             )}
@@ -202,11 +240,12 @@ const Auth = () => {
                 id="email"
                 type="email"
                 placeholder="seu@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
                 className="h-12 bg-card border-border/50 focus:border-primary"
-                required
+                {...register("email")}
               />
+              {errors.email && (
+                <p className="text-sm text-destructive">{errors.email.message}</p>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -217,12 +256,12 @@ const Auth = () => {
                 id="password"
                 type="password"
                 placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
                 className="h-12 bg-card border-border/50 focus:border-primary"
-                required
-                minLength={6}
+                {...register("password")}
               />
+              {errors.password && (
+                <p className="text-sm text-destructive">{errors.password.message}</p>
+              )}
             </div>
 
             <Button
@@ -230,16 +269,16 @@ const Auth = () => {
               variant="gradient"
               size="xl"
               className="w-full"
-              disabled={loading}
+              disabled={isSubmitting}
             >
-              {loading ? "Carregando..." : isLogin ? "Entrar" : "Cadastrar"}
+              {isSubmitting ? "Carregando..." : isLogin ? "Entrar" : "Cadastrar"}
             </Button>
           </form>
 
           <div className="mt-6 text-center">
             <button
               type="button"
-              onClick={() => setIsLogin(!isLogin)}
+              onClick={toggleMode}
               className="text-sm text-muted-foreground hover:text-primary transition-colors"
             >
               {isLogin

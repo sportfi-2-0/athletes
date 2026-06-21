@@ -33,7 +33,8 @@ import {
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
-import { CalendarIcon, Clock, Plus, Trash2, Pencil } from "lucide-react";
+import { CalendarIcon, Clock, Plus, Trash2, Pencil, CalendarPlus, X } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { AppLayout } from "@/components/AppLayout";
 import { ScriptForm, FormData } from "@/components/ScriptForm";
 import { ScriptCard, Script } from "@/components/ScriptCard";
@@ -60,6 +61,10 @@ const CalendarPage = () => {
   const [selectedScript, setSelectedScript] = useState<Script | null>(null);
   const [editingPostId, setEditingPostId] = useState<string | null>(null);
   const [defaultSport, setDefaultSport] = useState<string | undefined>(undefined);
+  const [pendingScript, setPendingScript] = useState<Script | null>(null);
+
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const fetchPosts = async () => {
     const { data } = await supabase
@@ -94,8 +99,36 @@ const CalendarPage = () => {
     fetchPosts();
   }, []);
 
+  // A script can arrive from "Agendar" (Roteiros / Meus Roteiros) via router state.
+  useEffect(() => {
+    const incoming = (location.state as { script?: Script } | null)?.script;
+    if (incoming) {
+      setPendingScript(incoming);
+      // Clear router state so a refresh doesn't re-trigger the scheduling flow.
+      navigate(location.pathname, { replace: true });
+    }
+  }, [location, navigate]);
+
+  const scriptToContent = (script: Script) =>
+    `${script.title}\n\n${script.content.join("\n\n")}\n\n💡 ${script.note}`;
+
+  const openScheduleForScript = (script: Script, day: Date) => {
+    setEditingPostId(null);
+    setTitle(script.title);
+    setTime("12:00");
+    setContent(scriptToContent(script));
+    setContentMode("manual");
+    setGeneratedScripts([]);
+    setSelectedScript(null);
+    setSelectedDate(day);
+    setDialogOpen(true);
+  };
+
   const handleDayClick = (day: Date) => {
     setSelectedDate(day);
+    if (pendingScript) {
+      openScheduleForScript(pendingScript, day);
+    }
   };
 
   const openNewPostDialog = () => {
@@ -186,6 +219,7 @@ const CalendarPage = () => {
       } else {
         toast.success("Post agendado!");
         setDialogOpen(false);
+        setPendingScript(null);
         fetchPosts();
       }
     }
@@ -215,6 +249,25 @@ const CalendarPage = () => {
         <p className="text-muted-foreground mb-8">
           Clique em um dia para agendar um post.
         </p>
+
+        {pendingScript && (
+          <div className="glass-card rounded-2xl p-4 mb-6 flex items-center gap-3 animate-fade-in">
+            <CalendarPlus className="w-5 h-5 text-primary shrink-0" />
+            <p className="text-sm text-foreground flex-1">
+              Selecione um dia no calendário para agendar{" "}
+              <strong>{pendingScript.title}</strong>.
+            </p>
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label="Cancelar agendamento"
+              onClick={() => setPendingScript(null)}
+              className="text-muted-foreground hover:text-foreground shrink-0"
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+        )}
 
         <div className="grid md:grid-cols-[auto_1fr] gap-8">
           <div className="glass-card rounded-3xl p-4 sm:p-6 self-start">
