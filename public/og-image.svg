@@ -1,0 +1,25 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="630" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#EAF2FE"/>
+      <stop offset="0.5" stop-color="#EAF6FE"/>
+      <stop offset="1" stop-color="#FBFAFE"/>
+    </linearGradient>
+    <linearGradient id="brand" x1="360" y1="250" x2="840" y2="400" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1964DC"/>
+      <stop offset="1" stop-color="#6CB8EA"/>
+    </linearGradient>
+    <linearGradient id="badge" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1964DC"/>
+      <stop offset="1" stop-color="#6CB8EA"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <g transform="translate(420, 196)">
+    <rect width="64" height="64" rx="16" fill="url(#badge)"/>
+    <path d="M32 14c0 10 2 12 12 12-10 0-12 2-12 12 0-10-2-12-12-12 10 0 12-2 12-12Z" fill="#fff"/>
+  </g>
+  <text x="500" y="248" font-family="'Plus Jakarta Sans', sans-serif" font-size="56" font-weight="800" fill="#22203A" dominant-baseline="middle">IRIS.ai</text>
+  <text x="600" y="360" text-anchor="middle" font-family="'Plus Jakarta Sans', sans-serif" font-size="64" font-weight="800" fill="url(#brand)">Marketing esportivo com IA</text>
+  <text x="600" y="430" text-anchor="middle" font-family="'Inter', sans-serif" font-size="30" font-weight="500" fill="#5B576E">Roteiros de conteúdo para atletas em poucos cliques</text>
+</svg>
