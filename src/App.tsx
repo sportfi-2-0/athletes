@@ -7,6 +7,8 @@ import { LoadingScreen } from "@/components/LoadingScreen";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import CalendarPage from "./pages/Calendar";
+import MyScripts from "./pages/MyScripts";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,6 +35,8 @@ const App = () => (
         <Routes>
           <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
           <Route path="/" element={<ProtectedRoute><Index /></ProtectedRoute>} />
+          <Route path="/meus-roteiros" element={<ProtectedRoute><MyScripts /></ProtectedRoute>} />
+          <Route path="/perfil" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
           <Route path="/calendario" element={<ProtectedRoute><CalendarPage /></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>

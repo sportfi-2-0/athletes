@@ -1,6 +1,13 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
-import { Check, Copy, Palette } from "lucide-react";
+import {
+  Check,
+  Copy,
+  Palette,
+  Bookmark,
+  BookmarkCheck,
+  CalendarPlus,
+} from "lucide-react";
 
 export interface Script {
   id: string;
@@ -14,9 +21,25 @@ export interface Script {
 interface ScriptCardProps {
   script: Script;
   index: number;
+  /** Renders a "Salvar" action when provided. */
+  onSave?: () => void;
+  saved?: boolean;
+  saving?: boolean;
+  /** Renders an "Agendar" action when provided. */
+  onSchedule?: () => void;
+  /** Page-specific actions (e.g. delete) rendered alongside the built-in ones. */
+  extraActions?: ReactNode;
 }
 
-export function ScriptCard({ script, index }: ScriptCardProps) {
+export function ScriptCard({
+  script,
+  index,
+  onSave,
+  saved,
+  saving,
+  onSchedule,
+  extraActions,
+}: ScriptCardProps) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -38,24 +61,62 @@ export function ScriptCard({ script, index }: ScriptCardProps) {
         <h3 className="font-display font-bold text-lg text-foreground">
           {script.title}
         </h3>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handleCopy}
-          className="shrink-0 text-muted-foreground hover:text-foreground"
-        >
-          {copied ? (
-            <>
-              <Check className="w-4 h-4 text-success" />
-              Copiado!
-            </>
-          ) : (
-            <>
-              <Copy className="w-4 h-4" />
-              Copiar
-            </>
+        <div className="flex flex-wrap items-center justify-end gap-1 shrink-0">
+          {extraActions}
+
+          {onSchedule && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onSchedule}
+              className="text-muted-foreground hover:text-primary"
+            >
+              <CalendarPlus className="w-4 h-4" />
+              Agendar
+            </Button>
           )}
-        </Button>
+
+          {onSave && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onSave}
+              disabled={saved || saving}
+              className="text-muted-foreground hover:text-primary disabled:opacity-100"
+            >
+              {saved ? (
+                <>
+                  <BookmarkCheck className="w-4 h-4 text-success" />
+                  Salvo
+                </>
+              ) : (
+                <>
+                  <Bookmark className="w-4 h-4" />
+                  {saving ? "Salvando..." : "Salvar"}
+                </>
+              )}
+            </Button>
+          )}
+
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleCopy}
+            className="text-muted-foreground hover:text-foreground"
+          >
+            {copied ? (
+              <>
+                <Check className="w-4 h-4 text-success" />
+                Copiado!
+              </>
+            ) : (
+              <>
+                <Copy className="w-4 h-4" />
+                Copiar
+              </>
+            )}
+          </Button>
+        </div>
       </div>
 
       <div className="space-y-3 mb-4">
